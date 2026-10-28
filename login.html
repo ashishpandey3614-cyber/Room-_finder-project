@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoomKhoj - Login</title>
+<style>
+body{margin:0;font-family:Arial;background:#f3f7f5}
+header{background:#176b5b;color:white;text-align:center;padding:20px}
+nav{text-align:center;padding:18px}
+nav a{margin:7px;color:#176b5b;font-weight:bold}
+.box{background:white;max-width:380px;margin:35px auto;padding:25px;border-radius:14px}
+input{width:100%;padding:12px;margin:10px 0;box-sizing:border-box}
+button{width:100%;padding:12px;background:#176b5b;color:white;border:0;border-radius:8px}
+#message{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<header><h1>Room finder Login</h1></header>
+<nav>
+<a href="index.html">Home</a>
+<a href="flat.html">Flat</a>
+<a href="single-room.html">Single Room</a>
+</nav>
+<div class="box">
+<h2>Email Login</h2>
+<form id="loginForm">
+<label>Email</label>
+<input type="email" id="email" required placeholder="you@example.com">
+<label>Password</label>
+<input type="password" id="password" required minlength="6" placeholder="Password">
+<button type="submit">Login</button>
+</form>
+<p id="message"></p>
+<p>New user? <a href="#" id="register">Create account</a></p>
+</div>
+<script>
+const form=document.getElementById("loginForm");
+form.addEventListener("submit",function(e){
+e.preventDefault();
+document.getElementById("message").textContent=
+"Login abhi demo hai. Real email authentication ke liye Firebase setup zaroori hai.";
+});
+document.getElementById("register").onclick=function(e){
+e.preventDefault();
+document.getElementById("message").textContent=
+"Account registration ke liye Firebase Authentication connect karein.";
+};
+</script>
+</body>
+</html>

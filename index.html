@@ -1,0 +1,502 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoomKhoj - Room Rental Finder</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f7f5;
+      color: #18382e;
+    }
+
+    header {
+      background: #176b5b;
+      color: white;
+      padding: 18px 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    header h1 { margin: 0; }
+
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: auto;
+      padding: 22px;
+    }
+
+    .panel, .room-card {
+      background: white;
+      padding: 18px;
+      margin-bottom: 20px;
+      border-radius: 14px;
+      box-shadow: 0 3px 12px #00000010;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccd8d2;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    button {
+      background: #176b5b;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+
+    button:hover { background: #105447; }
+
+    #searchMap, #ownerMap {
+      width: 100%;
+      height: 300px;
+      border-radius: 10px;
+      margin-top: 12px;
+    }
+
+    .room-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .room-card img {
+      width: 100%;
+      height: 170px;
+      object-fit: cover;
+      border-radius: 9px;
+    }
+
+    .price {
+      font-size: 22px;
+      font-weight: bold;
+      color: #176b5b;
+    }
+
+    .muted { color: #63756e; }
+
+    .call-link {
+      display: block;
+      background: #176b5b;
+      color: white;
+      text-decoration: none;
+      text-align: center;
+      padding: 11px;
+      border-radius: 8px;
+    }
+
+    footer {
+      text-align: center;
+      background: #123e34;
+      color: white;
+      padding: 22px;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid { grid-template-columns: 1fr; }
+      header { align-items: flex-start; }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>Room finder</h1>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="flat.html">Flats</a>
+    <a href="single-room.html">Single Rooms</a>
+    <a href="login.html">Login</a>
+  </nav>
+</header>
+
+<main>
+
+  <section class="panel">
+    <h2>Find Your Room</h2>
+
+    <div class="form-grid">
+      <input id="searchText" placeholder="Enter city or area">
+
+      <select id="maxRent">
+        <option value="">Any Budget</option>
+        <option value="5000">Up to ₹5,000</option>
+        <option value="8000">Up to ₹8,000</option>
+        <option value="12000">Up to ₹12,000</option>
+        <option value="20000">Up to ₹20,000</option>
+      </select>
+
+      <select id="searchType">
+        <option value="">All Room Types</option>
+        <option>Single Room</option>
+        <option>Shared Room</option>
+        <option>1 RK</option>
+        <option>1 BHK</option>
+      </select>
+
+      <button id="searchButton">Search Rooms</button>
+    </div>
+
+    <h3>Search on the Map</h3>
+    <p class="muted">Click a location to find listed rooms within 5 km.</p>
+    <div id="searchMap"></div>
+    <button id="clearMap">Clear Map Filter</button>
+  </section>
+
+  <section class="panel">
+    <h2>List Your Room</h2>
+    <p class="muted">Enter your room details and select its location on the map.</p>
+
+    <form id="roomForm">
+      <div class="form-grid">
+        <input id="ownerName" placeholder="Owner Name" required>
+
+        <input
+          id="ownerPhone"
+          type="tel"
+          placeholder="Phone Number"
+          pattern="[0-9+() -]{10,16}"
+          required
+        >
+
+        <input id="city" placeholder="City" required>
+        <input id="area" placeholder="Area or Address" required>
+
+        <input id="rent" type="number" min="1" placeholder="Monthly Rent (₹)" required>
+        <input id="length" type="number" min="1" step="0.1" placeholder="Room Length (ft)" required>
+
+        <input id="width" type="number" min="1" step="0.1" placeholder="Room Width (ft)" required>
+        <input id="height" type="number" min="1" step="0.1" placeholder="Room Height (ft)">
+
+        <select id="roomType" required>
+          <option value="">Select Room Type</option>
+          <option>Single Room</option>
+          <option>Shared Room</option>
+          <option>1 RK</option>
+          <option>1 BHK</option>
+        </select>
+
+        <input id="photoFile" type="file" accept="image/*">
+      </div>
+
+      <p class="muted">Room Photo Preview</p>
+      <img id="photoPreview" alt="Room photo preview"
+        style="display:none;width:100%;max-height:220px;object-fit:cover;border-radius:10px">
+
+      <h3>Select Room Location</h3>
+      <div id="ownerMap"></div>
+      <p id="locationStatus" class="muted">Click the map to select the room location.</p>
+
+      <button type="submit">List My Room</button>
+    </form>
+  </section>
+
+  <section>
+    <h2>Available Rooms</h2>
+    <p id="resultCount" class="muted"></p>
+    <div id="roomList" class="room-grid"></div>
+  </section>
+
+</main>
+
+<footer>
+  RoomKhoj © 2026 | Find Your Next Room
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+const $ = id => document.getElementById(id);
+
+let rooms = [];
+let selectedLocation = null;
+let searchLocation = null;
+let searchMarker = null;
+let ownerMarker = null;
+let photoData = "";
+
+try {
+  rooms = JSON.parse(localStorage.getItem("roomkhoj_rooms")) || [];
+} catch (error) {
+  rooms = [];
+}
+
+const searchMap = L.map("searchMap").setView([28.6139, 77.2090], 5);
+const ownerMap = L.map("ownerMap").setView([28.6139, 77.2090], 5);
+
+const mapOptions = {
+  maxZoom: 19,
+  attribution: "© OpenStreetMap contributors"
+};
+
+L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  mapOptions
+).addTo(searchMap);
+
+L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  mapOptions
+).addTo(ownerMap);
+
+function distanceKm(a, b) {
+  const radians = value => value * Math.PI / 180;
+  const dLat = radians(b.lat - a.lat);
+  const dLon = radians(b.lng - a.lng);
+
+  const value =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(radians(a.lat)) *
+    Math.cos(radians(b.lat)) *
+    Math.sin(dLon / 2) ** 2;
+
+  return 6371 * 2 *
+    Math.atan2(Math.sqrt(value), Math.sqrt(1 - value));
+}
+
+ownerMap.on("click", event => {
+  selectedLocation = event.latlng;
+
+  if (ownerMarker) ownerMap.removeLayer(ownerMarker);
+
+  ownerMarker = L.marker(event.latlng).addTo(ownerMap);
+
+  $("locationStatus").textContent =
+    "Selected: " +
+    event.latlng.lat.toFixed(5) + ", " +
+    event.latlng.lng.toFixed(5);
+
+  fetch(
+    "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" +
+    event.latlng.lat + "&lon=" + event.latlng.lng
+  )
+  .then(response => response.json())
+  .then(data => {
+    const address = data.address || {};
+
+    $("city").value =
+      address.city || address.town ||
+      address.village || $("city").value;
+
+    $("area").value =
+      address.suburb || address.neighbourhood ||
+      address.road || $("area").value;
+  })
+  .catch(() => {});
+});
+
+searchMap.on("click", event => {
+  searchLocation = event.latlng;
+
+  if (searchMarker) searchMap.removeLayer(searchMarker);
+
+  searchMarker = L.marker(event.latlng)
+    .addTo(searchMap)
+    .bindPopup("Searching within 5 km")
+    .openPopup();
+
+  renderRooms();
+});
+
+$("photoFile").addEventListener("change", event => {
+  const file = event.target.files[0];
+
+  if (!file) return;
+
+  if (!file.type.startsWith("image/") || file.size > 700000) {
+    alert("Choose an image smaller than 700 KB.");
+    event.target.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    photoData = reader.result;
+    $("photoPreview").src = photoData;
+    $("photoPreview").style.display = "block";
+  };
+
+  reader.readAsDataURL(file);
+});
+
+function renderRooms() {
+  const query = $("searchText").value.trim().toLowerCase();
+  const maxRent = Number($("maxRent").value) || Infinity;
+  const type = $("searchType").value;
+
+  const filtered = rooms.filter(room => {
+    const locationText = (room.city + " " + room.area).toLowerCase();
+
+    const matchesText = !query || locationText.includes(query);
+    const matchesRent = Number(room.rent) <= maxRent;
+    const matchesType = !type || room.type === type;
+
+    const matchesMap = !searchLocation ||
+      (room.lat != null && room.lng != null &&
+      distanceKm(searchLocation, {
+        lat: room.lat,
+        lng: room.lng
+      }) <= 5);
+
+    return matchesText && matchesRent && matchesType && matchesMap;
+  });
+
+  $("resultCount").textContent = filtered.length + " rooms found";
+  $("roomList").replaceChildren();
+
+  filtered.forEach(room => {
+    const card = document.createElement("article");
+    card.className = "room-card";
+
+    if (room.photo) {
+      const image = document.createElement("img");
+      image.src = room.photo;
+      image.alt = "Room photo";
+      card.appendChild(image);
+    }
+
+    const title = document.createElement("h3");
+    title.textContent = room.type + " - " + room.city;
+    card.appendChild(title);
+
+    const price = document.createElement("p");
+    price.className = "price";
+    price.textContent = "₹" + Number(room.rent).toLocaleString("en-IN") + " / month";
+    card.appendChild(price);
+
+    const details = document.createElement("p");
+    details.textContent =
+      room.area + " | " + room.length + " × " + room.width + " ft" +
+      (room.height ? " | Height: " + room.height + " ft" : "");
+    card.appendChild(details);
+
+    const owner = document.createElement("p");
+    owner.textContent = "Owner: " + room.owner;
+    card.appendChild(owner);
+
+    const call = document.createElement("a");
+    call.className = "call-link";
+    call.href = "tel:" + room.phone;
+    call.textContent = "Call Owner";
+    card.appendChild(call);
+
+    $("roomList").appendChild(card);
+  });
+}
+
+$("searchButton").addEventListener("click", renderRooms);
+
+$("searchText").addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    renderRooms();
+  }
+});
+
+$("maxRent").addEventListener("change", renderRooms);
+$("searchType").addEventListener("change", renderRooms);
+
+$("clearMap").addEventListener("click", () => {
+  searchLocation = null;
+
+  if (searchMarker) {
+    searchMap.removeLayer(searchMarker);
+    searchMarker = null;
+  }
+
+  renderRooms();
+});
+
+$("roomForm").addEventListener("submit", event => {
+  event.preventDefault();
+
+  if (!selectedLocation) {
+    alert("Select the room location on the map first.");
+    return;
+  }
+
+  const room = {
+    id: Date.now(),
+    owner: $("ownerName").value.trim(),
+    phone: $("ownerPhone").value.trim(),
+    city: $("city").value.trim(),
+    area: $("area").value.trim(),
+    rent: Number($("rent").value),
+    length: $("length").value,
+    width: $("width").value,
+    height: $("height").value,
+    type: $("roomType").value,
+    photo: photoData,
+    lat: selectedLocation.lat,
+    lng: selectedLocation.lng
+  };
+
+  rooms.unshift(room);
+
+  try {
+    localStorage.setItem("roomkhoj_rooms", JSON.stringify(rooms));
+  } catch (error) {
+    rooms.shift();
+    alert("Storage is full. Try a smaller photo.");
+    return;
+  }
+
+  event.target.reset();
+  photoData = "";
+  selectedLocation = null;
+
+  $("photoPreview").style.display = "none";
+
+  if (ownerMarker) {
+    ownerMap.removeLayer(ownerMarker);
+    ownerMarker = null;
+  }
+
+  $("locationStatus").textContent =
+    "Click the map to select the room location.";
+
+  renderRooms();
+  alert("Your room has been listed!");
+});
+
+renderRooms();
+</script>
+
+</body>
+</html>

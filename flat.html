@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoomKhoj - Flat</title>
+<style>
+body{margin:0;background:#f3f7f5;font-family:Arial}
+header{background:#176b5b;color:white;text-align:center;padding:20px}
+nav{text-align:center;padding:18px}
+a{margin:7px;color:#176b5b;font-weight:bold}
+main{max-width:800px;margin:30px auto;padding:20px}
+.card{background:white;padding:20px;margin:15px 0;border-radius:12px}
+button{padding:10px;background:#176b5b;color:white;border:0;border-radius:7px}
+input{padding:10px;width:90%;margin:6px}
+</style>
+</head>
+<body>
+<header><h1>Roomfinder - Flat</h1></header>
+<nav>
+<a href="index.html">Home</a>
+<a href="flat.html">Flat</a>
+<a href="single-room.html">Single Room</a>
+<a href="login.html">Login</a>
+</nav>
+<main>
+<h2>Available Flats</h2>
+<input id="city" placeholder="City search karein">
+<div id="list"></div>
+</main>
+<script>
+const flats=[
+{city:"Noida",name:"1 BHK Flat",rent:12000},
+{city:"Delhi",name:"2 BHK Flat",rent:18000},
+{city:"Pune",name:"1 BHK Flat",rent:10000}
+];
+function showFlats(){
+const q=document.getElementById("city").value.toLowerCase();
+document.getElementById("list").innerHTML=flats
+.filter(f=>f.city.toLowerCase().includes(q))
+.map(f=>`<div class="card">
+<h3>${f.name}</h3><p>${f.city}</p>
+<h2>₹${f.rent}/month</h2>
+<button onclick="alert('Demo listing: owner contact abhi available nahi hai')">Contact Owner</button>
+</div>`).join("")||"Flat nahi mila";
+}
+document.getElementById("city").addEventListener("input",showFlats);
+showFlats();
+</script>
+</body>
+</html>
